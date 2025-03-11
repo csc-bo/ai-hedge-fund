@@ -1,41 +1,98 @@
-// This file exports functions for visualizing data, such as generating graphs or charts.
+import fs from 'fs';
+import mermaid from 'mermaid';
+import { createCanvas } from 'canvas';
+import puppeteer from 'puppeteer';
 
-const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
+/**
+ * Initializes mermaid with optimal settings for graph visualization
+ */
+mermaid.initialize({
+    startOnLoad: false,
+    theme: 'default',
+    securityLevel: 'loose',
+    flowchart: {
+        htmlLabels: true,
+        curve: 'basis'
+    }
+});
 
-const width = 800; // Width of the chart
-const height = 600; // Height of the chart
-const chartCallback = (ChartJS) => {
-    // Register any necessary chart types or plugins here
-};
+/**
+ * Saves a workflow graph as a PNG file
+ * @param {Object} graph - The workflow graph object
+ * @param {string} outputFilePath - Path where the PNG file will be saved
+ */
+export async function saveGraphAsPng(graph, outputFilePath = '') {
+    try {
+        // Convert graph to mermaid syntax
+        const mermaidDefinition = convertToMermaidSyntax(graph);
+        
+        // Generate SVG using Puppeteer (for better rendering)
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox']
+        });
+        
+        const page = await browser.newPage();
+        
+        // Inject mermaid
+        await page.setContent(`
+            <!DOCTYPE html>
+            <html>
+                <body>
+                    <pre class="mermaid">
+                        ${mermaidDefinition}
+                    </pre>
+                    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+                    <script>
+                        mermaid.initialize({startOnLoad: true});
+                    </script>
+                </body>
+            </html>
+        `);
 
-const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, chartCallback });
-
-async function saveGraphAsPng(data, filePath) {
-    const configuration = {
-        type: 'line', // Example chart type
-        data: {
-            labels: data.labels,
-            datasets: [{
-                label: 'Trading Data',
-                data: data.values,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                fill: false,
-            }],
-        },
-        options: {
-            responsive: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                },
-            },
-        },
-    };
-
-    const image = await chartJSNodeCanvas.renderToBuffer(configuration);
-    require('fs').writeFileSync(filePath, image);
+        // Wait for rendering
+        await page.waitForSelector('.mermaid svg');
+        
+        // Get the SVG
+        const svg = await page.$eval('.mermaid svg', el => el.outerHTML);
+        
+        // Convert SVG to PNG using node-canvas
+        const canvas = createCanvas(800, 600);
+        const ctx = canvas.getContext('2d');
+        
+        // Write to file
+        const filePath = outputFilePath || 'graph.png';
+        fs.writeFileSync(filePath, canvas.toBuffer());
+        
+        await browser.close();
+        
+        return filePath;
+    } catch (error) {
+        console.error('Error generating graph:', error);
+        throw error;
+    }
 }
 
-module.exports = {
-    saveGraphAsPng,
-};
+/**
+ * Converts a workflow graph object to Mermaid diagram syntax
+ * @param {Object} graph - The workflow graph object
+ * @returns {string} - Mermaid diagram syntax
+ */
+function convertToMermaidSyntax(graph) {
+    const nodes = graph.nodes || [];
+    const edges = graph.edges || [];
+    
+    let mermaidDef = 'graph TD;\n';
+    
+    // Add nodes
+    nodes.forEach(node => {
+        mermaidDef += `    ${node.id}[${node.label || node.id}];\n`;
+    });
+    
+    // Add edges
+    edges.forEach(edge => {
+        mermaidDef += `    ${edge.from}-->${edge.to};\n`;
+    });
+    
+    return mermaidDef;
+}

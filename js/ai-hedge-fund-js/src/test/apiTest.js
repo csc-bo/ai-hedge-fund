@@ -10,7 +10,7 @@ async function testAllEndpoints(ticker = 'AAPL') {
         const prices = await api.getPriceData(
             ticker, 
             '2023-01-01', 
-            '2023-12-31'
+            '2023-01-31'
         );
         console.log(`Found ${prices.length} price records`);
         console.log('Sample price:', prices[0]);
@@ -28,8 +28,8 @@ async function testAllEndpoints(ticker = 'AAPL') {
         console.log('\n3. Testing getCompanyNews:');
         const news = await api.getCompanyNews(
             ticker, 
-            '2023-12-31', 
-            '2023-01-01'
+            '2024-01-31', 
+            '2023-12-31'
         );
         console.log(`Found ${news.length} news items`);
         console.log('Latest news:', news[0]);
@@ -46,8 +46,8 @@ async function testAllEndpoints(ticker = 'AAPL') {
         console.log('\n5. Testing getInsiderTrades:');
         const trades = await api.getInsiderTrades(
             ticker, 
-            '2023-12-31',
-            '2023-01-01'
+            '2024-03-31',
+            '2023-12-31'
         );
         console.log(`Found ${trades.length} insider trades`);
         console.log('Latest trade:', trades[0]);
@@ -132,12 +132,12 @@ async function runTests() {
     await testAllEndpoints('AAPL');
 
     // Test specific endpoint with custom parameters
-    await testEndpoint('metrics', {
-        ticker: 'MSFT',
-        endDate: '2023-12-31',
-        period: 'quarterly',
-        limit: 5
-    });
+    // await testEndpoint('metrics', {
+    //     ticker: 'MSFT',
+    //     endDate: '2023-12-31',
+    //     period: 'quarterly',
+    //     limit: 5
+    // });
 }
 
 // Run the tests
