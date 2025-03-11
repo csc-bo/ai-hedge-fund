@@ -1,0 +1,19 @@
+{
+  "name": "ai-hedge-fund-js",
+  "version": "1.0.0",
+  "description": "A hedge fund trading system implemented in JavaScript.",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node src/test/runTests.js"
+  },
+  "dependencies": {
+    "dotenv": "^10.0.0"
+  },
+  "devDependencies": {
+    "jest": "^27.0.0"
+  },
+  "author": "Your Name",
+  "license": "MIT"
+}
